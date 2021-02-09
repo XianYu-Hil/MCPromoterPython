@@ -11,7 +11,7 @@ import re
 import random
 
 plugin_name = 'MCDaemonPython'  # 模块名称
-plugin_version = 'V0.5.0β'  # 模块版本号
+plugin_version = 'V0.5.1β'  # 模块版本号
 plugin_author = 'XianYu_Hil'  # 模块作者
 plugin_status = 'running'  # 模块初始状态
 proOperator = ['XianYuHil']  # 最高权限
