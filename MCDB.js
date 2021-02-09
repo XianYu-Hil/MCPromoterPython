@@ -649,65 +649,7 @@ setAfterActListener('onLoadName', function (e) {
     playerData[name] = [];
     playerData[name]["deathPos"] = [];
     playerData[name]["isSuicide"] = false;
-    //废弃功能-进服面板
-    /*
-    var serverDays = getDiffDate('2020-06-25T23:30:00');
-    var lg = fileReadAllText('Logininterval.json');
-    var lgj = JSON.parse(lg);
-    var i;
-    var ii = lgj.lgt.sz.length - 1;
-    var havaplayer = false;
-    var msg;
-    for (i in lgj.lgt.sz) {
-        if (i <= ii && lgj.lgt.sz[i].id == name) {
-            var pl = '"' + name + '"';
-            var d = new Date();
-            var logint = d.getTime();
-            var logout = lgj.lgt.sz[i].logout
-            var interval = logint - logout
-            let days = Math.floor(interval / (24 * 3600 * 1000));
-            let leavel = interval % (24 * 3600 * 1000);
-            let hours = Math.floor(leavel / (3600 * 1000));
-            let leavel2 = leavel % (3600 * 1000);
-            let minutes = Math.floor(leavel2 / (60 * 1000));
-            log(`时隔${days}天${hours}时${minutes}分 玩家${name}再次进入了服务器`);
-            msg = `现在距离你上次登出服务器过去了${days}天${hours}时${minutes}分`;
-            havaplayer = true;
-        } else if (i == ii && lgj.lgt.sz[i].id != name && havaplayer == false) {
-            var xr = '},{"id":' + '"' + name + '"' + ',"logout":0}]}}'
-            var xrz = lg.replace("}]}}", xr);
-            fileWriteAllText('Logininterval.json', xrz);
-            log(`玩家${name}首次进入服务器`)
-            msg = `你是首次进入本服务器，祝你游戏愉快`;
-        }
-    }
-    runcmd(`time query day`);
-    request('https://v1.hitokoto.cn', 'GET', 'encode=text', function (e) {
-        setTimeout(function () {
-            sendSimpleForm(uuid, `HIC Welcome!`, `${name}，欢迎回到HIC\n\n${e}\n\n现在游戏内的天数是${gameDay}今天是开服的第${serverDays}天\n${msg}\n\n${Plugin_Name} - ${Plugin_Version}`, '["叔叔我啊，要进来啦~~~"]');
-        }, 18000);
-    });
-    */
 });
-/*
-setAfterActListener('onPlayerLeft', function (e) {
-    var je = JSON.parse(e);
-    var lg = fileReadAllText('Logininterval.json');
-    var lgj = JSON.parse(lg);
-    var i;
-    var ii = lgj.lgt.sz.length - 1;
-    for (i in lgj.lgt.sz) {
-        if (i <= ii && lgj.lgt.sz[i].id == je.playername) {
-            var d = new Date();
-            var logout = d.getTime();
-            lgj.lgt.sz[i].logout = logout
-            var jz = JSON.stringify(lgj);
-            fileWriteAllText('Logininterval.json', jz);
-        }
-    }
-});
-*/
-//#endregion
 
 //玩家下线解除占用
 setAfterActListener('onPlayerLeft', function (e) {

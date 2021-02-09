@@ -36,3 +36,25 @@ V0.4.0β
 1、移植 @day
 2、修复@=无效的bug
 3、完成服务端输出信息的拦截与处理机制
+
+V0.5.0β
+更新时间：2021.02.09
+==================================
+1、移植@count entity与@moblist ，并合并为@entity
+    @count entity --> @entity count
+    @moblist      --> @entity list
+2、移植@item与@count item，并将后者合并入前者
+    @count item   --> @item count
+3、移植@show，并更名为@sta
+4、移植@ki、@mg、@kill、@load、@sh、@task
+5、移植@tick，并移除@tick speed与@tick normal，仅通过数值直接修改
+6、将帮助信息、自定义自杀提示、内置榜单中文名使用字典存储，代替原有的if逻辑
+7、编写帮助信息
+8、移植挖掘榜、放置榜
+9、移除伤害榜、承伤榜(IronPythonRunner限制)
+
+
+bugs:
+1、内置计分板中文名无法匹配
+2、entity count失效
+3、item count失效
