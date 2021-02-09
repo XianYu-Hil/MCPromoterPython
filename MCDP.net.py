@@ -6,15 +6,19 @@ import mc
 import tool
 import threading
 import time
+import datetime
+import re
 
 plugin_name = 'MCDaemonPython'  # 模块名称
-plugin_version = 'V0.3.0β'  # 模块版本号
+plugin_version = 'V0.4.0β'  # 模块版本号
 plugin_author = 'XianYu_Hil'  # 模块作者
 plugin_status = 'running'  # 模块初始状态
 operator = 'XianYuHil'  # 最高权限
 
 playerDate = {}  # 玩家数据字典
 dimensionCN = {0: "§l§2主世界", 1: "§l§4下界", 2: "§l§e末地"}  # 群系中文名转换
+gameDay = ''
+serverStatus = {'gameDay': '', 'tickStatus': '', 'kiStatus': '', 'mgStatus': '', 'entityCounter': '', 'itemCounter': ''}
 
 
 def load_plugin():  # Module initializer |模块初始化器
@@ -37,6 +41,12 @@ def uuidParsing(name):  # uuid Parsing | uuid解析
         if key['playername'] == name:
             return key['uuid']
     return 'null'
+
+
+def getDiffDate(targetDate):  # 获取时间差
+    now = datetime.datetime.now()
+    output = now-targetDate
+    return str(output.days)
 
 
 def removeBOT(_botName):  # Bot removal event | Bot移除事件
@@ -84,7 +94,7 @@ def inputtext(e):  # @Command core methods | @指令核心方法
             elif argsList[1] == 'help':
                 pass
         elif argsList[0] == '@=':
-            result = eval(msg[1:])
+            result = eval(msg[2:])
             normFeedback(name, result)
         elif argsList[0] == '@back':
             if playerDate[name]['deathPos']['enable']:
@@ -121,9 +131,15 @@ def inputtext(e):  # @Command core methods | @指令核心方法
                               '] ~~~ tp @e[name=bot_' + botName + ']')
         elif argsList[0] == '@day':
             if argsList[1] == 'game':
-                pass
+                mc.runcmd('time query day')
+
+                def printGameDay():
+                    normFeedback(name, '现在的游戏天数为' + serverStatus['gameDay'])
+
+                threading.Timer(0.5, printGameDay).start()
             elif argsList[1] == 'server':
-                pass
+                serverDay = getDiffDate(datetime.datetime.strptime('2020-06-25', '%Y-%m-%d'))
+                normFeedback(name, '今天是开服的第' + serverDay + '天')
         elif argsList[0] == '@here':
             mc.runcmd('playsound random.levelup @a')
             normFeedback('@a', '§e§l' + name + '§r在' + world + '§e§l[' + x + ',' + y + ',' + z + ']§r向大家打招呼！')
@@ -155,7 +171,7 @@ def mobdie(e):
         playerDate[bsName]['deathPos']['z'] = int(z)
         playerDate[bsName]['deathPos']['d'] = p.dimensionid
         playerDate[bsName]['deathPos']['enable'] = True
-    if bsName[:4] == 'bot_':    # bot死亡
+    if bsName[:4] == 'bot_':  # bot死亡
         removeBOT(bsName)
 
 
@@ -167,6 +183,29 @@ def load_name(e):  # Player enter event | 玩家进入服务器
     playerDate[name]["deathPos"]['enable'] = False
     playerDate[name]["isSuicide"] = False
     playerDate[name]['uuid'] = p.uuid
+
+
+def server_cmdoutput(e):    # 后台输出处理/拦截
+    p = mc.AnalysisEvent(e)
+    output = str(p.output)
+    if output.startswith('Day is '):
+        serverStatus['gameDay'] = re.findall(r"\d+\.?\d*", output)[0]
+    elif output.startswith('randomtickspeed = '):
+        serverStatus['tickStatus'] = re.findall(r"\d+\.?\d*", output)[0]
+    elif output.startswith('keepinventory = '):
+        if output.startswith('keepinventory = true'):
+            serverStatus['kiStatus'] = '已开启'
+        else:
+            serverStatus['kiStatus'] = '已关闭'
+    elif output.startswith('mobGriefing = '):
+        if output.startswith('mobGriefing = true'):
+            serverStatus['mgStatus'] = '已开启'
+        else:
+            serverStatus['mgStatus'] = '已关闭'
+    elif 'entityCounter' in output:
+        serverStatus['entityCounter'] = re.findall(r"\d+\.?\d*", output)[0]
+    elif 'itemCounter' in output:
+        serverStatus['itemCounter'] = re.findall(r"\d+\.?\d*", output)[0]
 
 
 def player_left(e):  # Player leave event | 玩家离开服务器
