@@ -1,0 +1,23 @@
+From  MCDaemonBedrock-V2.11.0 To MCDaemonPython-V1.0.0   |    从MCDB-V2.11.0 到 MCDP-V1.0.0
+What Changed:   |   发生了什么改变
+==============================
+游戏内
+1、适配1.16.201.02
+2、移除MCDB.log日志输出
+3、移除@MCDB update、@server、@rs(隐藏指令)、@cheat(隐藏指令)
+4、移除伤害榜、承伤榜
+5、移除@tick fast 及@tick normal，仅可通过指定数值修改随机刻倍数
+5、加入物品使用榜
+6、部分指令更名
+    统计实体数量 @count entity -----> @entity count
+    列出实体列表 @moblist      -----> @entity list
+    统计掉落物数量 @count item  -----> @item count
+    修改侧边栏显示 @show       -----> @sta
+7、更多整活自杀提示
+
+===============================
+游戏外
+1、从 JavaScriptRunner平台 迁移至 IronPythonRunner
+2、模块语言从JavaScript变更为IronPython
+3、使用str.split()来切割指令参数，获得更灵活的指令规则
+4、帮助信息、自定义自杀提示、内置统计榜中文名匹配、特殊授权名单、世界id中文名匹配使用列表存储
