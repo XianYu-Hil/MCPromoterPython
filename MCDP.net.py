@@ -11,7 +11,7 @@ import re
 import random
 
 plugin_name = 'MCDaemonPython'  # 模块名称
-plugin_version = 'V1.1.0'  # 模块版本号
+plugin_version = 'V0.5.1β'  # 模块版本号
 plugin_author = 'XianYu_Hil'  # 模块作者
 plugin_status = 'running'  # 模块初始状态
 proOperator = ['XianYuHil']  # 最高权限
@@ -111,9 +111,8 @@ def inputtext(e):  # @Command core methods | @指令核心方法
                 mc.runcmd('scoreboard objectives add Dig dummy §l§7挖掘榜')
                 mc.runcmd('scoreboard objectives add Dead dummy §l§7死亡榜')
                 mc.runcmd('scoreboard objectives add Placed dummy §l§7放置榜')
-                # mc.runcmd('scoreboard objectives add Attack dummy §l§7伤害榜')
-                # mc.runcmd('scoreboard objectives add Hurt dummy §l§7承伤榜')
-                mc.runcmd('scoreboard objectives add Used dummy §l§7使用榜')
+                mc.runcmd('scoreboard objectives add Attack dummy §l§7伤害榜')
+                mc.runcmd('scoreboard objectives add Hurt dummy §l§7承伤榜')
                 mc.runcmd('scoreboard objectives add Tasks dummy §l§e服务器摸鱼指南')
                 mc.runcmd('scoreboard objectives add _CounterCache dummy')
                 mc.runcmd('scoreboard objectives add Counter dummy')
@@ -124,7 +123,7 @@ def inputtext(e):  # @Command core methods | @指令核心方法
                 for helpInf in cmdHelper:
                     normFeedback(name, str(helpInf))
         elif msg.startswith('@='):
-            result = str(eval(msg[2:]))
+            result = eval(msg[2:])
             normFeedback(name, result)
         elif argsList[0] == '@back':
             if playerDate[name]['deathPos']['enable']:
@@ -179,7 +178,7 @@ def inputtext(e):  # @Command core methods | @指令核心方法
                 def printEntityCount():
                     normFeedback(name, '当前的实体数为' + serverStatus['entityCounter'])
 
-                threading.Timer(1, printEntityCount).start()
+                threading.Timer(0.5, printEntityCount)
             elif argsList[1] == 'list':
                 mc.runcmd('say §r§o§9服务器内实体列表§r§l§f @e')
         elif argsList[0] == '@here':
@@ -197,7 +196,7 @@ def inputtext(e):  # @Command core methods | @指令核心方法
                 def printItemCount():
                     normFeedback(name, '当前的掉落物数为' + serverStatus['itemCounter'])
 
-                threading.Timer(1, printItemCount).start()
+                threading.Timer(0.5, printItemCount)
             elif argsList[1] == 'pick':
                 mc.runcmd('tp @e[type=item] @a[name=' + name + ']')
                 normFeedback('@a', name + '已拾取所有掉落物')
@@ -271,7 +270,6 @@ def inputtext(e):  # @Command core methods | @指令核心方法
         elif argsList[0] == '@sta':
             statisName = argsList[1]
             cnName = {
-                statisName: statisName,
                 'Dig': '挖掘榜',
                 'Placed': '放置榜',
                 'Attack': '伤害榜',
@@ -279,7 +277,7 @@ def inputtext(e):  # @Command core methods | @指令核心方法
                 'Killed': '击杀榜',
                 'Tasks': '待办事项榜',
                 'Dead': '死亡榜',
-                'Used': '使用榜'
+                statisName: statisName,
             }  # 内置榜单中文名称
             if statisName != 'null':
                 mc.runcmd('scoreboard objectives setdisplay sidebar ' + statisName)
@@ -309,7 +307,7 @@ def inputtext(e):  # @Command core methods | @指令核心方法
                 normFeedback(name, '已将游戏内随机刻加快' + tickSpeed + '倍')
 
 
-def mobdie(e):      # 击杀榜|死亡榜|死亡爆点|死亡点记录|bot死亡处理
+def mobdie(e):
     p = mc.AnalysisEvent(e)
     jsName = p.srcname  # 击杀者名字
     jsType = p.srctype  # 击杀者类型
@@ -339,28 +337,31 @@ def mobdie(e):      # 击杀榜|死亡榜|死亡爆点|死亡点记录|bot死亡
         removeBOT(bsName)
 
 
-def destroyblock(e):    # 挖掘榜
+def destroyblock(e):
     p = mc.AnalysisEvent(e)
     name = p.playername
     if name != '':
         mc.runcmd('scoreboard players add @a[name=' + name + '] Dig 1')
 
 
-def placeblock(e):      # 放置榜
+def placeblock(e):
     p = mc.AnalysisEvent(e)
     name = p.playername
     if name != '':
         mc.runcmd('scoreboard players add @a[name=' + name + '] Placed 1')
 
 
-def useitem(e):     # 物品使用榜
+def load_name(e):  # Player enter event | 玩家进入服务器
     p = mc.AnalysisEvent(e)
     name = p.playername
-    if name != '':
-        mc.runcmd('scoreboard players add @a[name=' + name + '] Used 1')
+    playerDate[name] = {}
+    playerDate[name]['deathPos'] = {}
+    playerDate[name]['deathPos']['enable'] = False
+    playerDate[name]['isSuicide'] = False
+    playerDate[name]['uuid'] = p.uuid
 
 
-def server_cmdoutput(e):  # 后台输出处理|拦截
+def server_cmdoutput(e):  # 后台输出处理/拦截
     p = mc.AnalysisEvent(e)
     output = str(p.output)
     if output.startswith('Day is '):
@@ -381,38 +382,6 @@ def server_cmdoutput(e):  # 后台输出处理|拦截
         serverStatus['entityCounter'] = re.findall(r"\d+\.?\d*", output)[0]
     elif 'itemCounter' in output:
         serverStatus['itemCounter'] = re.findall(r"\d+\.?\d*", output)[0]
-    blockWords = ['Killed', 'Dead', 'Dig', 'Placed', 'Used', 'Health', '_CounterCache']  # 控制台输出屏蔽词
-    for blockWord in blockWords:
-        if blockWord in output:
-            return False
-    return True
-
-
-def inputcommand(e):    # 反作弊
-    p = mc.AnalysisEvent(e)
-    cmd = p.cmd
-    name = p.playername
-    mc.logout('[MCDP]<' + name + '>' + cmd)
-    allowedCmds = ['/?', '/help', '/list', '/me', '/mixer', '/msg', '/tell', '/w', '/tickingarea', '/tp']  # 指令白名单
-    for allowedCmd in allowedCmds:
-        if allowedCmd in cmd:
-            return True
-    mc.runcmd('kick ' + name + ' 试图违规使用指令' + cmd + ',自动踢出')
-    normFeedback('@a', name + ' 试图违规使用指令' + cmd + ',自动踢出')
-
-
-def load_name(e):  # Player enter event | 玩家进入服务器
-    p = mc.AnalysisEvent(e)
-    name = p.playername
-    playerDate[name] = {}
-    playerDate[name]['deathPos'] = {}
-    playerDate[name]['deathPos']['enable'] = False
-    playerDate[name]['isSuicide'] = False
-    playerDate[name]['uuid'] = p.uuid
-
-    loginTimeStr = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d %H:%M:%S')
-    datas = 'title=进服提醒：&desp=<'+name+'>于 '+loginTimeStr+' 进入服务器。'
-    tool.HttpPost('https://sctapi.ftqq.com/SCT7055TZeKHEkbchM3ueaFaWbOv58Ca.send?', datas)
 
 
 def player_left(e):  # Player leave event | 玩家离开服务器
