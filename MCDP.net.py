@@ -18,8 +18,6 @@ plugin_status = 'running'  # 模块初始状态
 proOperator = ['XianYuHil']  # 最高权限
 serviceDate = '2020-06-25'  # 开服日期
 
-isShowHealth = True  # 是否开启血量显示
-
 playerDate = {}  # 玩家数据字典
 dimensionCN = {0: "§l§2主世界", 1: "§l§4下界", 2: "§l§e末地"}  # 群系中文名字典
 serverStatus = {'gameDay': '', 'tickStatus': '', 'kiStatus': '', 'mgStatus': '', 'entityCounter': '',
@@ -52,6 +50,8 @@ cmdHelper = [
     '@tick [倍数|status]      设置/查询随机刻倍数',
     '§2========================'
 ]  # 帮助信息列表
+
+isShowHealth = True  # 是否开启血量显示
 
 
 def load_plugin():  # Module initializer |模块初始化器
