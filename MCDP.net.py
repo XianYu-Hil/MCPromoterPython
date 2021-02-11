@@ -10,9 +10,10 @@ import datetime
 import re
 import random
 import os
+from os.path import getsize, join
 
 plugin_name = 'MCDaemonPython'  # 模块名称
-plugin_version = 'V1.1.0'  # 模块版本号
+plugin_version = 'V1.3.0'  # 模块版本号
 plugin_author = 'XianYu_Hil'  # 模块作者
 plugin_status = 'running'  # 模块初始状态
 proOperator = ['XianYuHil']  # 最高权限
@@ -41,9 +42,10 @@ cmdHelper = [
     '@load [block|circle]    设置方形/圆形常加载区块',
     '@load remove   移除常加载区块',
     '@mg [true|false]   开启/关闭生物破坏',
-    '@qb [make|back]    快速备份/还原存档',
+    '@qb [make|back|restart]    快速备份/还原/重启服务器',
     '@qb time   查询上次备份时间',
     '@sh <指令>   向控制台注入指令(需特殊授权)',
+    '@size  获取服务器存档大小',
     '@sta <计分板名>    将侧边栏显示调整为特定计分板',
     '@sta null      关闭侧边栏显示',
     '@task [add|remove] <任务名>   添加/移除指定任务',
@@ -298,14 +300,19 @@ def inputtext(e):  # @Command core methods | @指令核心方法
             qbPath = './[MCDP]/QuickBackup/'
             if argsList[1] == 'make':
                 normFeedback('@a', '服务器将在§l5秒§r后重启进行备份，预计需要半分钟')
-                time.sleep(5)
+                os.system('start ' + qbPath + 'QuickBackupMake.bat')
                 tool.WriteAllText(qbPath + 'QuickBackupTime.txt', qbTime)
-                os.system(qbPath + 'QuickBackupMake.bat')
+                time.sleep(5)
                 mc.runcmd('stop')
             elif argsList[1] == 'back':
                 normFeedback('@a', '服务器将在§l5秒§r后重启进行回档，预计需要半分钟')
+                os.system('start ' + qbPath + 'QuickBackupBack.bat')
                 time.sleep(5)
-                os.system(qbPath + 'QuickBackupBack.bat')
+                mc.runcmd('stop')
+            elif argsList[1] == 'restart':
+                normFeedback('@a', '服务器将在§l5秒§r后重启进行重启，预计需要半分钟')
+                os.system('start ' + qbPath + 'QuickBackupRestart.bat')
+                time.sleep(5)
                 mc.runcmd('stop')
             elif argsList[1] == 'time':
                 _lastQBTime = tool.ReadAllLine(qbPath + 'QuickBackupTime.txt')
@@ -316,6 +323,12 @@ def inputtext(e):  # @Command core methods | @指令核心方法
                 command = msg[3:]
                 mc.runcmd(command)
                 normFeedback('@a', '已向控制台注入了' + argsList[1])
+        elif argsList[0] == '@size':
+            worldSize = 0
+            for root, dirs, files in os.walk('./worlds/'):
+                worldSize += sum([getsize(join(root, name)) for name in files])
+            worldSize /= 1048576
+            normFeedback('@a', '当前服务器的存档大小是§l§6' + str(worldSize) + '§7MB')
         elif argsList[0] == '@sta':
             statisName = argsList[1]
             cnName = {
@@ -359,6 +372,8 @@ def inputtext(e):  # @Command core methods | @指令核心方法
             i = mc.creatPlayerObject(playerDate[name]['uuid'])
             he = eval(str(i.Health))
             mc.logout(str(int(he['value'])))
+        else:
+            normFeedback(name, '无效的MCDP指令，请输入@mcdp help获取帮助')
 
 
 def mobdie(e):  # 击杀榜|死亡榜|死亡爆点|死亡点记录|bot死亡处理

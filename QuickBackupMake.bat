@@ -1,5 +1,3 @@
-@echo off
-
 timeout /T 15
 
 set worldpath=..\..\worlds
