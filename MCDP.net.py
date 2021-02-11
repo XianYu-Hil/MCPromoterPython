@@ -9,6 +9,7 @@ import time
 import datetime
 import re
 import random
+import os
 
 plugin_name = 'MCDaemonPython'  # 模块名称
 plugin_version = 'V1.1.0'  # 模块版本号
@@ -16,6 +17,8 @@ plugin_author = 'XianYu_Hil'  # 模块作者
 plugin_status = 'running'  # 模块初始状态
 proOperator = ['XianYuHil']  # 最高权限
 serviceDate = '2020-06-25'  # 开服日期
+
+isShowHealth = True  # 是否开启血量显示
 
 playerDate = {}  # 玩家数据字典
 dimensionCN = {0: "§l§2主世界", 1: "§l§4下界", 2: "§l§e末地"}  # 群系中文名字典
@@ -32,6 +35,7 @@ cmdHelper = [
     '@bot list  列出服务器内存在的bot',
     '@day [game|server]     查询游戏内/开服天数',
     '@entity [count|list]   统计/列出服务器内实体',
+    '@health [true|false    开启/关闭血量显示更新]',
     '@here      全服报点',
     '@item      [clear|count|pick]      清除/统计/拾取服务器内掉落物',
     '@ki [true|false|status]   开启/关闭/查询死亡不掉落',
@@ -39,6 +43,8 @@ cmdHelper = [
     '@load [block|circle]    设置方形/圆形常加载区块',
     '@load remove   移除常加载区块',
     '@mg [true|false]   开启/关闭生物破坏',
+    '@qb [make|back]    快速备份/还原存档',
+    '@qb time   查询上次备份时间',
     '@sh <指令>   向控制台注入指令(需特殊授权)',
     '@sta <计分板名>    将侧边栏显示调整为特定计分板',
     '@sta null      关闭侧边栏显示',
@@ -49,6 +55,7 @@ cmdHelper = [
 
 
 def load_plugin():  # Module initializer |模块初始化器
+    threading.Thread(target=showHealth).start()
     mc.logout("[MCDP]" + plugin_version + "已装载完成.用法:@mcdp status")
 
 
@@ -80,6 +87,23 @@ def removeBOT(_botName):  # Bot removal event | Bot移除事件
     botName = _botName[4:]
     mc.runcmd('tickingarea remove loader_' + botName)
     normFeedback('@a', '§ebot_' + botName + ' 退出了游戏')
+
+
+def showHealth():
+    mc.logout('[MCDP]血量显示 线程已启动')
+    normFeedback('@a', '血量显示 线程已启动')
+    while isShowHealth:
+        if len(playerDate) > 0:
+            for name in playerDate:
+                uuid = playerDate[name]['uuid']
+                i = mc.creatPlayerObject(uuid)
+                _health = eval(str(i.Health))
+                health = str(int(_health['value']))
+                mc.runcmd("scoreboard players set " + name + " Health " + health)
+                # mc.logout(health)
+        time.sleep(1)
+    mc.logout('[MCDP]血量显示 线程已关闭')
+    normFeedback('@a', '血量显示 线程已关闭')
 
 
 def inputtext(e):  # @Command core methods | @指令核心方法
@@ -182,6 +206,14 @@ def inputtext(e):  # @Command core methods | @指令核心方法
                 threading.Timer(1, printEntityCount).start()
             elif argsList[1] == 'list':
                 mc.runcmd('say §r§o§9服务器内实体列表§r§l§f @e')
+        elif argsList[0] == '@health':
+            global isShowHealth
+            if argsList[1] == 'true':
+                if not isShowHealth:
+                    isShowHealth = True
+                    threading.Thread(target=showHealth).start()
+            elif argsList[1] == 'false':
+                isShowHealth = False
         elif argsList[0] == '@here':
             mc.runcmd('playsound random.levelup @a')
             normFeedback('@a', '§e§l' + name + '§r在' + world + '§e§l[' + x + ',' + y + ',' + z + ']§r向大家打招呼！')
@@ -262,7 +294,23 @@ def inputtext(e):  # @Command core methods | @指令核心方法
                 mc.runcmd('gamerule mobGriefing false')
                 normFeedback('@a', '生物破坏已关闭')
         elif argsList[0] == '@qb':
-            pass
+            qbTime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+            qbPath = './[MCDP]/QuickBackup/'
+            if argsList[1] == 'make':
+                normFeedback('@a', '服务器将在§l5秒§r后重启进行备份，预计需要半分钟')
+                time.sleep(5)
+                tool.WriteAllText(qbPath + 'QuickBackupTime.txt', qbTime)
+                os.system(qbPath + 'QuickBackupMake.bat')
+                mc.runcmd('stop')
+            elif argsList[1] == 'back':
+                normFeedback('@a', '服务器将在§l5秒§r后重启进行回档，预计需要半分钟')
+                time.sleep(5)
+                os.system(qbPath + 'QuickBackupBack.bat')
+                mc.runcmd('stop')
+            elif argsList[1] == 'time':
+                _lastQBTime = tool.ReadAllLine(qbPath + 'QuickBackupTime.txt')
+                lastQBTime = str(_lastQBTime[0])
+                normFeedback('@a', '上一个qb备份时间：§l' + lastQBTime)
         elif argsList[0] == '@sh':
             if name in proOperator:
                 command = msg[3:]
@@ -307,9 +355,13 @@ def inputtext(e):  # @Command core methods | @指令核心方法
                 tickSpeed = argsList[1]
                 mc.runcmd('gamerule randomtickspeed ' + tickSpeed)
                 normFeedback(name, '已将游戏内随机刻加快' + tickSpeed + '倍')
+        elif argsList[0] == '@test':
+            i = mc.creatPlayerObject(playerDate[name]['uuid'])
+            he = eval(str(i.Health))
+            mc.logout(str(int(he['value'])))
 
 
-def mobdie(e):      # 击杀榜|死亡榜|死亡爆点|死亡点记录|bot死亡处理
+def mobdie(e):  # 击杀榜|死亡榜|死亡爆点|死亡点记录|bot死亡处理
     p = mc.AnalysisEvent(e)
     jsName = p.srcname  # 击杀者名字
     jsType = p.srctype  # 击杀者类型
@@ -339,21 +391,21 @@ def mobdie(e):      # 击杀榜|死亡榜|死亡爆点|死亡点记录|bot死亡
         removeBOT(bsName)
 
 
-def destroyblock(e):    # 挖掘榜
+def destroyblock(e):  # 挖掘榜
     p = mc.AnalysisEvent(e)
     name = p.playername
     if name != '':
         mc.runcmd('scoreboard players add @a[name=' + name + '] Dig 1')
 
 
-def placeblock(e):      # 放置榜
+def placeblock(e):  # 放置榜
     p = mc.AnalysisEvent(e)
     name = p.playername
     if name != '':
         mc.runcmd('scoreboard players add @a[name=' + name + '] Placed 1')
 
 
-def useitem(e):     # 物品使用榜
+def useitem(e):  # 物品使用榜
     p = mc.AnalysisEvent(e)
     name = p.playername
     if name != '':
@@ -388,7 +440,7 @@ def server_cmdoutput(e):  # 后台输出处理|拦截
     return True
 
 
-def inputcommand(e):    # 反作弊
+def inputcommand(e):  # 反作弊
     p = mc.AnalysisEvent(e)
     cmd = p.cmd
     name = p.playername
@@ -409,10 +461,9 @@ def load_name(e):  # Player enter event | 玩家进入服务器
     playerDate[name]['deathPos']['enable'] = False
     playerDate[name]['isSuicide'] = False
     playerDate[name]['uuid'] = p.uuid
-
-    loginTimeStr = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d %H:%M:%S')
-    datas = 'title=进服提醒：&desp=<'+name+'>于 '+loginTimeStr+' 进入服务器。'
-    tool.HttpPost('https://sctapi.ftqq.com/SCT7055TZeKHEkbchM3ueaFaWbOv58Ca.send?', datas)
+    # loginTimeStr = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d %H:%M:%S')
+    # datas = 'title=进服提醒：&desp=<'+name+'>于 '+loginTimeStr+' 进入服务器。'
+    # tool.HttpPost('https://sctapi.ftqq.com/SCT7055TZeKHEkbchM3ueaFaWbOv58Ca.send?', datas)
 
 
 def player_left(e):  # Player leave event | 玩家离开服务器
